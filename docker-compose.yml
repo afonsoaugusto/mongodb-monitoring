@@ -1,0 +1,106 @@
+version: "3.7"
+services:
+  
+  portainer:
+    image: portainer/portainer
+    ports:
+      - "9000:9000"
+    networks:
+      - portainer-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+  mongodb:
+    image: mongo:4.0
+    ports:
+      - "27017:27017"
+    networks:
+      - database
+    volumes:
+      - mongo_data:/var/lib/mongo
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"    
+    networks:
+      - database
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/var/lib/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/etc/grafana/provisioning:/etc/grafana/provisioning
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]      
+
+  alertmanager:
+    image: prom/alertmanager
+    networks:
+      - database
+    volumes:
+      - alertmanager_data:/alertmanager
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]      
+
+  prometheus:
+    image: prom/prometheus
+    depends_on:
+      - mongodb_exporter    
+    ports:
+      - "9090:9090"    
+    networks:
+      - database
+    volumes:
+      - ./prometheus/etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]      
+
+  mongodb_exporter:
+    image: afonsoaugusto/mongodb_exporter
+    depends_on:
+      - mongodb
+    ports:
+      - "9216:9216"    
+    environment:
+      - MONGODB_URL='mongodb://mongodb:27017'
+      - MONGODB_URI='mongodb://mongodb:27017'
+    networks:
+      - database
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  portainer-net:
+  database:
+
+volumes: 
+  mongo_data:
+  grafana_data:
+  prometheus_data:
+  alertmanager_data:
