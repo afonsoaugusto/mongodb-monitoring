@@ -6,7 +6,7 @@ services:
     ports:
       - "9000:9000"
     networks:
-      - portainer-net
+      - database
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
@@ -15,7 +15,7 @@ services:
       placement:
         constraints: [node.role == manager]
 
-  mongodb:
+  db:
     image: mongo:4.0
     ports:
       - "27017:27017"
@@ -85,8 +85,22 @@ services:
     ports:
       - "9216:9216"    
     environment:
-      - MONGODB_URL='mongodb://mongodb:27017'
-      - MONGODB_URI='mongodb://mongodb:27017'
+      - MONGODB_URL=mongodb://db:27017
+      - MONGODB_URI=mongodb://db:27017
+    networks:
+      - database
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+  manager:
+    image: ops-manager
+    depends_on:
+      - mongodb
+    ports:
+      - "8080:8080"    
     networks:
       - database
     deploy:
@@ -96,7 +110,6 @@ services:
         constraints: [node.role == manager]
 
 networks:
-  portainer-net:
   database:
 
 volumes: 

@@ -13,8 +13,9 @@ docker stack rm stackdemo
 
 
 docker service ls
-docker service ps --no-trunc cm0xlbx0cpmj
+docker service ps --no-trunc y2yrwrn1irn9
 
+docker stack rm stackdemo $(docker service ls -q)
 docker stop $(docker ps -a -q)
 docker container rm $(docker container ls -aq)
 docker volume rm $(docker volume ls -q)
