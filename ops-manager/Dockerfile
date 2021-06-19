@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:groovy-20210614
 
 COPY mongodb-mms_4.0.14.50550.20190730T1610Z-1_x86_64.deb /
 
